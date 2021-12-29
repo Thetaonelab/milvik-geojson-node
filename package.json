@@ -1,0 +1,22 @@
+{
+  "name": "milvik-geo",
+  "version": "1.0.0",
+  "description": "Geolocation from JSON",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Thetaone",
+  "license": "ISC",
+  "devDependencies": {
+    "nodemon": "^2.0.15"
+  },
+  "dependencies": {
+    "axios": "^0.24.0",
+    "body-parser": "^1.19.0",
+    "cors": "^2.8.5",
+    "csv-parse": "^5.0.3",
+    "express": "^4.17.1",
+    "fs": "^0.0.1-security"
+  }
+}
