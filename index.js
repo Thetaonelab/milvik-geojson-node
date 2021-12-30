@@ -10,7 +10,7 @@ const app = express()
   .use(bodyParser.urlencoded({ limit: '50mb', extended: true }))
   .use(bodyParser.json({ limit: '50mb' }));
 
-const port = 3000;
+const port = 3001;
 
 app.use(express.json());
 app.use(cors());
@@ -29,49 +29,6 @@ checkPresent = (caches,shop_address) => {
   }
 }
 
-app.post("/get-location",(req,res)=>{
-    fs.readFile("data.json", async (err, data) => {
-        // Check for errors
-        if (err) throw err;
-        // Converting to JSON
-        let features=[];
-        const shops = JSON.parse(data);
-        for(let i=0;i<50001;i=i+1){
-            console.log(i);
-            await axios.get(
-                `https://geocode.search.hereapi.com/v1/geocode?q=${encodeURIComponent(shops[i].shop_address)}&apiKey=k1oGgG0PQbBrSsfmUlzcLkaQ0ERCV3-PsLzBj_zYM5k`
-                )
-            .then(response => {
-                console.log(response.data.items[0]);
-                    features.push({
-                        type: "Feature",
-                        geometry: {
-                          type: "Point",
-                          coordinates: [response.data.items[0].position.lng,response.data.items[0].position.lat ]
-                        },
-                        properties: {
-                          name: shops[i].shop_name
-                        }
-                      });
-                })
-                .catch((err) => {
-                    console.error(err,shops[i].shop_name);
-                });
-        }
-        console.log(features.length);
-        features={
-            type: "FeatureCollection",
-            features
-        };
-        fs.writeFile("results50000.json", JSON.stringify(features), err => {
-            // Checking for errors
-            if (err) throw err; 
-            console.log("Done writing"); // Success
-        });
-        res.json({sucess:true,result:features});
-    });
-});
-
 app.post("/create-csv",(req,res)=>{
   const{upper,lower}=req.body;
   let fileExists=false;
@@ -83,7 +40,6 @@ app.post("/create-csv",(req,res)=>{
     // Converting to JSON
     const shops = JSON.parse(data);
     let writeStream = fs.createWriteStream(`results${lower}_${upper}.csv`);
-    let caches = [];
     let newLine = [];
     newLine.push("Agent Name");
     newLine.push("Address");
@@ -100,11 +56,11 @@ app.post("/create-csv",(req,res)=>{
     } catch(err) {
       console.error(err)
     }
-    if(fileExists){
+    if(!fileExists){
       fs.writeFile("cache.json", JSON.stringify(prevCaches), err => {
         // Checking for errors
         if (err) throw err; 
-        console.log("Done writing"); // Success
+        console.log("File Created"); // Success
       });
     }
     fs.readFile("cache.json", async (err, data) => {
@@ -113,6 +69,7 @@ app.post("/create-csv",(req,res)=>{
       // Converting to JSON
       prevCaches = JSON.parse(data);
       for(let index=lower;index<upper;index=index+1){
+        console.log(index);
         let cacheCheck = await checkPresent(prevCaches,shops[index].shop_address);
         if(!cacheCheck)
         {
@@ -133,7 +90,7 @@ app.post("/create-csv",(req,res)=>{
             })
             .catch((err) => {
                 console.error(err,shops[index].shop_name);
-                caches.push({name:shops[index].shop_name,shop_address:shops[index].shop_address,address:null});
+                prevCaches.push({name:shops[index].shop_name,shop_address:shops[index].shop_address,address:null});
           });
         } else {
           if(cacheCheck.address){
